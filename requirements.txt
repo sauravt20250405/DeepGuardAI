@@ -1,0 +1,11 @@
+flask
+werkzeug
+torch
+torchvision
+opencv-python
+facenet-pytorch
+pandas
+Pillow
+pytorch-grad-cam
+numpy
+fpdf

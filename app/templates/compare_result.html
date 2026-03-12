@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h2>🔀 Comparison Results</h2>
+    <a href="{{ url_for('compare') }}" class="btn-primary" style="text-decoration: none; padding: 0.75rem 1.5rem;">New Comparison</a>
+</div>
+
+<div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+    {% for result in results %}
+    <div class="glass-panel" style="flex: 1; min-width: 300px; text-align: center;">
+        <h3 style="margin-bottom: 1rem; word-break: break-all;">{{ result.filename }}</h3>
+        
+        {% if result.face_preview %}
+        <img src="{{ result.face_preview }}" alt="Face" style="width: 150px; height: 150px; object-fit: cover; border-radius: 12px; margin-bottom: 1rem; border: 2px solid {% if result.is_fake %}rgba(239,68,68,0.5){% else %}rgba(16,185,129,0.5){% endif %};">
+        {% endif %}
+        
+        <div style="font-size: 1.8rem; font-weight: 800; margin-bottom: 0.5rem; color: {% if result.is_fake %}#fca5a5{% else %}#6ee7b7{% endif %};">
+            {{ result.verdict }}
+        </div>
+        
+        <div style="font-size: 2.5rem; font-weight: 900; margin-bottom: 1rem;">
+            {{ result.confidence }}%
+        </div>
+        
+        <div style="padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px; margin-top: 1rem;">
+            <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 0.25rem;">SHA-256 Hash</p>
+            <p style="font-family: monospace; font-size: 0.65rem; color: #94a3b8; word-break: break-all;">{{ result.sha256 }}</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- COMPARISON SUMMARY -->
+<div class="glass-panel" style="margin-top: 2rem; text-align: center;">
+    <h3 style="margin-bottom: 1rem;">📊 Comparison Summary</h3>
+    {% if results[0].is_fake == results[1].is_fake %}
+        <p style="color: #fbbf24; font-size: 1.2rem;">Both files received the <strong>same verdict</strong> ({{ results[0].verdict }})</p>
+    {% else %}
+        <p style="color: #6ee7b7; font-size: 1.2rem;">The files received <strong>different verdicts</strong> — forensic inconsistency detected</p>
+    {% endif %}
+    
+    {% if results[0].sha256 == results[1].sha256 %}
+        <p style="color: #ef4444; margin-top: 0.5rem;">⚠️ <strong>Identical SHA-256 hashes</strong> — these are the same file!</p>
+    {% else %}
+        <p style="color: #94a3b8; margin-top: 0.5rem;">✅ Different SHA-256 hashes confirmed — unique files</p>
+    {% endif %}
+</div>
+{% endblock %}
