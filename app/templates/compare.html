@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="glass-panel" style="max-width: 700px; margin: 3rem auto; text-align: center;">
+    <h2 style="margin-bottom: 0.5rem;">🔀 Comparison Mode</h2>
+    <p style="color: var(--text-muted); margin-bottom: 2rem;">Upload two media files side-by-side for forensic comparison</p>
+    
+    <form action="{{ url_for('compare') }}" method="POST" enctype="multipart/form-data">
+        <div style="display: flex; gap: 2rem; margin-bottom: 2rem;">
+            <div style="flex: 1;">
+                <label style="display: block; color: #94a3b8; margin-bottom: 0.5rem; font-weight: 600;">Media A</label>
+                <div class="upload-area" style="padding: 2rem;">
+                    <span style="color: var(--text-muted); font-size: 0.9rem;">File A</span>
+                    <input type="file" name="video_a" accept=".mp4,.jpg,.jpeg,.png" required class="native-file-input">
+                </div>
+            </div>
+            <div style="flex: 1;">
+                <label style="display: block; color: #94a3b8; margin-bottom: 0.5rem; font-weight: 600;">Media B</label>
+                <div class="upload-area" style="padding: 2rem;">
+                    <span style="color: var(--text-muted); font-size: 0.9rem;">File B</span>
+                    <input type="file" name="video_b" accept=".mp4,.jpg,.jpeg,.png" required class="native-file-input">
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="btn-primary" style="width: 100%;">⚡ Compare & Analyze</button>
+    </form>
+</div>
+{% endblock %}

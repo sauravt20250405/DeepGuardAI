@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h2>📊 My Scan History</h2>
+    <div style="display: flex; gap: 0.75rem;">
+        <a href="{{ url_for('export_csv') }}" class="btn-primary" style="text-decoration: none; padding: 0.75rem 1.5rem; background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.3);">
+            📥 Export CSV
+        </a>
+        <a href="{{ url_for('dashboard') }}" class="btn-primary" style="text-decoration: none; padding: 0.75rem 1.5rem; background: rgba(255,255,255,0.1);">
+            🔄 Refresh
+        </a>
+    </div>
+</div>
+
+<!-- TOP LEVEL STATS -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <span class="stat-label">Total Media Scanned</span>
+        <span class="stat-value">{{ stats.total_scans }}</span>
+    </div>
+    <div class="stat-card" style="border-color: rgba(239, 68, 68, 0.3);">
+        <span class="stat-label">Deepfakes Detected 🚨</span>
+        <span class="stat-value" style="color: #fca5a5;">{{ stats.total_fakes }}</span>
+    </div>
+    <div class="stat-card" style="border-color: rgba(16, 185, 129, 0.3);">
+        <span class="stat-label">Authentic Media ✅</span>
+        <span class="stat-value" style="color: #6ee7b7;">{{ stats.total_reals }}</span>
+    </div>
+    <div class="stat-card" style="border-color: rgba(14, 165, 233, 0.3);">
+        <span class="stat-label">Avg. AI Confidence</span>
+        <span class="stat-value" style="color: #7dd3fc;">{{ stats.avg_conf }}%</span>
+    </div>
+</div>
+
+<!-- ANALYTICS CHARTS -->
+{% if stats.total_scans > 0 %}
+<div style="display: flex; gap: 2rem; margin-bottom: 2rem; flex-wrap: wrap;">
+    <div class="glass-panel" style="flex: 1; min-width: 280px; padding: 1.5rem;">
+        <h3 style="text-align: center; margin-bottom: 1rem; color: #e2e8f0;">Verdict Distribution</h3>
+        <canvas id="pieChart" style="max-height: 250px;"></canvas>
+    </div>
+    <div class="glass-panel" style="flex: 2; min-width: 400px; padding: 1.5rem;">
+        <h3 style="text-align: center; margin-bottom: 1rem; color: #e2e8f0;">Confidence Scores</h3>
+        <canvas id="barChart" style="max-height: 250px;"></canvas>
+    </div>
+</div>
+{% endif %}
+
+<!-- MYSQL TRACES -->
+<div class="glass-panel" style="padding: 1.5rem;">
+    <h3 style="margin-bottom: 1.5rem; padding-left: 1rem; color: #e2e8f0;">Raw Forensic Trace Logs</h3>
+    
+    <div class="table-container">
+        {% if logs %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Trace ID</th>
+                    <th>Source File</th>
+                    <th>Uploaded</th>
+                    <th>Confidence</th>
+                    <th>AI Engine</th>
+                    <th>Verdict</th>
+                    <th>Report</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td style="color: var(--primary); font-family: monospace; font-weight: bold;">#{{ log.media_id }}</td>
+                    <td>{{ log.filename }}</td>
+                    <td style="color: var(--text-muted);">{{ log.upload_date }}</td>
+                    <td style="font-weight: 600;">{{ log.confidence_score }}%</td>
+                    <td style="color: var(--text-muted);">{{ log.model_used }}</td>
+                    <td>
+                        <span class="badge {% if log.verdict == 'Fake' %}badge-fake{% else %}badge-real{% endif %}">
+                            {{ log.verdict }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('download_report', media_id=log.media_id) }}" style="color: var(--accent); text-decoration: none; font-weight: 600;">📄 PDF</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div style="padding: 3rem; text-align: center; color: var(--text-muted);">
+            No forensic logs found. Run a scan to populate traces.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if stats.total_scans > 0 %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+// Pie Chart
+new Chart(document.getElementById('pieChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Deepfake', 'Authentic'],
+        datasets: [{
+            data: [{{ stats.total_fakes }}, {{ stats.total_reals }}],
+            backgroundColor: ['rgba(239, 68, 68, 0.7)', 'rgba(16, 185, 129, 0.7)'],
+            borderColor: ['rgba(239, 68, 68, 1)', 'rgba(16, 185, 129, 1)'],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { labels: { color: '#94a3b8', font: { size: 13 } } }
+        }
+    }
+});
+
+// Bar Chart
+const logData = [
+    {% for log in logs %}
+    { name: '{{ log.filename[:15] }}', score: {{ log.confidence_score }}, fake: {{ 'true' if log.verdict == 'Fake' else 'false' }} },
+    {% endfor %}
+];
+
+new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+    data: {
+        labels: logData.map(d => d.name),
+        datasets: [{
+            label: 'Confidence %',
+            data: logData.map(d => d.score),
+            backgroundColor: logData.map(d => d.fake ? 'rgba(239,68,68,0.6)' : 'rgba(16,185,129,0.6)'),
+            borderColor: logData.map(d => d.fake ? '#ef4444' : '#10b981'),
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { labels: { color: '#94a3b8' } } },
+        scales: {
+            x: { ticks: { color: '#94a3b8', maxRotation: 45 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+            y: { min: 0, max: 100, ticks: { color: '#94a3b8', callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        }
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

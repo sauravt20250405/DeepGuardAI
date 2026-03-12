@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h2>🛡️ Admin Control Center</h2>
+    <span style="background: rgba(239, 68, 68, 0.2); color: #fca5a5; padding: 0.5rem 1rem; border-radius: 999px; font-size: 0.85rem; font-weight: 600; border: 1px solid rgba(239, 68, 68, 0.3);">ADMIN ACCESS</span>
+</div>
+
+<!-- ADMIN STATS -->
+<div class="stats-grid" style="grid-template-columns: repeat(5, 1fr);">
+    <div class="stat-card" style="border-color: rgba(14, 165, 233, 0.3);">
+        <span class="stat-label">Registered Users</span>
+        <span class="stat-value" style="color: #7dd3fc;">{{ stats.total_users }}</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Total Scans</span>
+        <span class="stat-value">{{ stats.total_scans }}</span>
+    </div>
+    <div class="stat-card" style="border-color: rgba(239, 68, 68, 0.3);">
+        <span class="stat-label">Deepfakes Found</span>
+        <span class="stat-value" style="color: #fca5a5;">{{ stats.total_fakes }}</span>
+    </div>
+    <div class="stat-card" style="border-color: rgba(16, 185, 129, 0.3);">
+        <span class="stat-label">Authentic Media</span>
+        <span class="stat-value" style="color: #6ee7b7;">{{ stats.total_reals }}</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Avg Confidence</span>
+        <span class="stat-value">{{ stats.avg_conf }}%</span>
+    </div>
+</div>
+
+<!-- REGISTERED USERS TABLE -->
+<div class="glass-panel" style="padding: 1.5rem; margin-bottom: 2rem;">
+    <h3 style="margin-bottom: 1.5rem; padding-left: 1rem; color: #e2e8f0;">👥 Registered Users</h3>
+    <div class="table-container">
+        {% if users %}
+        <table>
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Registered</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td style="color: var(--primary); font-family: monospace; font-weight: bold;">#{{ user.user_id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>
+                        <span class="badge {% if user.role == 'admin' %}badge-fake{% else %}badge-real{% endif %}">
+                            {{ user.role }}
+                        </span>
+                    </td>
+                    <td style="color: var(--text-muted);">{{ user.created_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div style="padding: 2rem; text-align: center; color: var(--text-muted);">No registered users found.</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ALL SCAN LOGS -->
+<div class="glass-panel" style="padding: 1.5rem;">
+    <h3 style="margin-bottom: 1.5rem; padding-left: 1rem; color: #e2e8f0;">📋 All User Activity Logs</h3>
+    <div class="table-container">
+        {% if logs %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Trace ID</th>
+                    <th>User</th>
+                    <th>Source File</th>
+                    <th>Uploaded</th>
+                    <th>Confidence</th>
+                    <th>Verdict</th>
+                    <th>Report</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td style="color: var(--primary); font-family: monospace; font-weight: bold;">#{{ log.media_id }}</td>
+                    <td style="color: var(--accent); font-weight: 600;">{{ log.username or 'Unknown' }}</td>
+                    <td>{{ log.filename }}</td>
+                    <td style="color: var(--text-muted);">{{ log.upload_date }}</td>
+                    <td style="font-weight: 600;">{{ log.confidence_score }}%</td>
+                    <td>
+                        <span class="badge {% if log.verdict == 'Fake' %}badge-fake{% else %}badge-real{% endif %}">
+                            {{ log.verdict }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('download_report', media_id=log.media_id) }}" style="color: var(--accent); text-decoration: none; font-weight: 600;">📄 PDF</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div style="padding: 3rem; text-align: center; color: var(--text-muted);">No activity logs in the system yet.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
