@@ -68,13 +68,36 @@ Target Machine: Honor MagicBook X16 (2024)
 
 ## 🔧 Installation & Setup
 
-### Clone the Repository:
-[x] Project Architecture & Directory Setup
+### 1. Clone the Repository
+```bash
+git clone https://github.com/sauravt20250405/DeepGuardAI.git
+cd DeepGuardAI
+```
 
-[x] Database Schema Design
+### 2. Set up a Virtual Environment
+```bash
+python -m venv venv
+# On Windows
+venv\Scripts\activate
+# On macOS/Linux
+source venv/bin/activate
+```
 
-[x] Data Preprocessing (MTCNN Implementation)
+### 3. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
 
-[x] Model Training (ResNet/EfficientNet backbone)
+### 4. Run the Application
+```bash
+cd app
+python app.py
+```
+*(Or use `streamlit run app.py` if running via Streamlit directly)*
 
-[x] Streamlit Dashboard Integration
+## ✅ Project Status
+- [x] Project Architecture & Directory Setup
+- [x] Database Schema Design
+- [x] Data Preprocessing (MTCNN Implementation)
+- [x] Model Training (ResNet/EfficientNet backbone)
+- [x] Streamlit Dashboard Integration
