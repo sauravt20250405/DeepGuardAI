@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h2>Analysis Report: <span>{{ result.filename }}</span></h2>
+    <div style="display: flex; gap: 1rem;">
+        <a href="{{ url_for('download_report', media_id=result.media_id) }}" class="btn-primary" style="text-decoration: none; padding: 0.75rem 1.5rem; background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.4);">
+            📄 Download PDF
+        </a>
+        <a href="{{ url_for('index') }}" class="btn-primary" style="text-decoration: none; padding: 0.75rem 1.5rem;">New Scan</a>
+    </div>
+</div>
+
+<!-- TOP STATS ROW -->
+<div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 2rem;">
+    <div class="stat-card" style="border-color: {% if result.is_fake %}rgba(239,68,68,0.3){% else %}rgba(16,185,129,0.3){% endif %};">
+        <span class="stat-label">Visual Verdict</span>
+        <span class="stat-value" style="font-size: 1.4rem; color: {% if result.is_fake %}#fca5a5{% else %}#6ee7b7{% endif %};">{{ result.verdict }}</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Visual Confidence</span>
+        <span class="stat-value">{{ result.confidence }}%</span>
+    </div>
+    <div class="stat-card" style="border-color: {% if result.audio_score > 50 %}rgba(239,68,68,0.3){% else %}rgba(16,185,129,0.3){% endif %};">
+        <span class="stat-label">🎙️ Audio Analysis</span>
+        <span class="stat-value" style="font-size: 1.2rem; color: {% if result.audio_score > 50 %}#fca5a5{% else %}#6ee7b7{% endif %};">{{ result.audio_verdict }}</span>
+        <span style="color: var(--text-muted); font-size: 0.9rem;">Score: {{ result.audio_score }}%</span>
+    </div>
+</div>
+
+<div class="glass-panel">
+    <div class="results-grid">
+        
+        <!-- VERDICT CARD -->
+        <div class="verdict-card {% if result.is_fake %}verdict-fake{% else %}verdict-real{% endif %}">
+            <div class="verdict-title">{{ result.verdict }}</div>
+            <div class="confidence">{{ result.confidence }}%</div>
+            <p style="color: var(--text-muted); font-size: 1.1rem; max-width: 80%;">
+                {% if result.is_fake %}
+                Thermal regions in the heatmap highlight the spatial inconsistencies that triggered the detection algorithm.
+                {% else %}
+                The Grad-CAM thermal map shows uniform spatial consistency, indicating no digital manipulation.
+                {% endif %}
+            </p>
+            
+            <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color); width: 100%;">
+                <p style="font-size: 0.9rem; color: var(--text-muted);">
+                    Media logged to Forensic Database under ID: <strong style="color: white;">{{ result.media_id }}</strong>
+                </p>
+            </div>
+        </div>
+        
+        <!-- EXPLAINABLE AI HEATMAP -->
+        <div class="heatmap-container">
+            <h3 style="text-align: center; margin-bottom: 1rem; color: #cbd5e1;">Grad-CAM Execution Trace</h3>
+            <div class="image-comparison">
+                <div class="image-box">
+                    <img src="{{ result.original_face }}" alt="Original Face Crop">
+                    <span>Source Extract</span>
+                </div>
+                <div class="image-box">
+                    <img src="{{ result.heatmap }}" alt="AI Saliency Map">
+                    <span>Saliency Signature</span>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<!-- SHA-256 FORENSIC HASH -->
+{% if result.file_hash %}
+<div class="glass-panel" style="margin-top: 2rem; padding: 1.5rem;">
+    <h3 style="margin-bottom: 0.75rem; color: #e2e8f0;">🔗 Forensic Chain-of-Custody</h3>
+    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.5rem;">SHA-256 File Hash (tamper-proof verification)</p>
+    <code style="display: block; background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; color: #fbbf24; font-size: 0.8rem; word-break: break-all; font-family: monospace;">{{ result.file_hash }}</code>
+</div>
+{% endif %}
+
+<!-- TIME-SERIES CHART -->
+{% if result.timeline %}
+<div class="glass-panel" style="margin-top: 2rem;">
+    <h3 style="margin-bottom: 1rem; color: #e2e8f0;">⏱️ Temporal Analysis — Deepfake Probability Over Time ({{ result.duration_sec }}s)</h3>
+    <canvas id="timelineChart" style="width: 100%; max-height: 300px;"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+    const ctx = document.getElementById('timelineChart').getContext('2d');
+    const timelineData = {{ result.timeline | tojson }};
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: timelineData.map(d => d.second + 's'),
+            datasets: [{
+                label: 'Deepfake Probability (%)',
+                data: timelineData.map(d => d.confidence),
+                borderColor: '{{ "#ef4444" if result.is_fake else "#10b981" }}',
+                backgroundColor: '{{ "rgba(239,68,68,0.1)" if result.is_fake else "rgba(16,185,129,0.1)" }}',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 3,
+                pointHoverRadius: 6,
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { labels: { color: '#94a3b8' } }
+            },
+            scales: {
+                x: { 
+                    ticks: { color: '#94a3b8' },
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    title: { display: true, text: 'Video Timeline (seconds)', color: '#94a3b8' }
+                },
+                y: { 
+                    min: 0, max: 100,
+                    ticks: { color: '#94a3b8', callback: v => v + '%' },
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    title: { display: true, text: 'Fake Probability', color: '#94a3b8' }
+                }
+            }
+        }
+    });
+</script>
+{% endif %}
+
+{% endblock %}
