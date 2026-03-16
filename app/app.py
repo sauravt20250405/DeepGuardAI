@@ -31,7 +31,7 @@ from src.audio_analysis import analyze_video_audio
 
 # --- Initialization ---
 app = Flask(__name__)
-app.secret_key = 'deepguard_secret_key_change_in_prod'
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'deepguard_secret_key_change_in_prod')
 app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # Increased to 500 MB max video size
 
 # --- Simple Authentication Decorator ---
@@ -167,7 +167,7 @@ def scan():
     processed_count = 0
     single_result_data = None
     
-    db = DeepGuardDB(user='root', password='Luck@492025', database='DeepGuard_AI')
+    db = DeepGuardDB()
 
     for file in files:
         if file and file.filename.lower().endswith('.mp4'):
@@ -439,7 +439,7 @@ def download_report(media_id):
     from fpdf import FPDF
     
     try:
-        db = DeepGuardDB(user='root', password='Luck@492025', database='DeepGuard_AI')
+        db = DeepGuardDB()
         logs = db.get_all_logs()
         db.close()
         
@@ -900,3 +900,8 @@ def profile():
 if __name__ == "__main__":
     print("Starting DeepGuard Flask App via waitress/dev server...")
     app.run(host="0.0.0.0", port=5000, debug=True)
+
+
+
+git clone https://github.com/sauravt20250405/DeepGuardAI.git
+cd DeepGuardAI

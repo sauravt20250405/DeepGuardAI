@@ -2,10 +2,13 @@ flask
 werkzeug
 torch
 torchvision
-opencv-python
+opencv-python-headless
 facenet-pytorch
 pandas
 Pillow
 pytorch-grad-cam
 numpy
 fpdf
+gunicorn
+mysql-connector-python
+python-dotenv

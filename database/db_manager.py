@@ -1,9 +1,14 @@
 import mysql.connector
 from mysql.connector import Error
 from werkzeug.security import generate_password_hash, check_password_hash
+import os
 
 class DeepGuardDB:
-    def __init__(self, host='localhost', user='root', password='Luck@492025', database='DeepGuard_AI'):
+    def __init__(self, 
+                 host=os.environ.get('DB_HOST', 'localhost'), 
+                 user=os.environ.get('DB_USER', 'root'), 
+                 password=os.environ.get('DB_PASS', 'Luck@492025'), 
+                 database=os.environ.get('DB_NAME', 'DeepGuard_AI')):
         self.conn = mysql.connector.connect(
             host=host,
             user=user,
