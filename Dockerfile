@@ -1,5 +1,8 @@
 FROM python:3.10-slim
 
+# Create a non-root user (UID 1000) as required by HF Spaces
+RUN useradd -m -u 1000 user
+
 WORKDIR /app
 
 # Install system dependencies
@@ -9,14 +12,17 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first to leverage Docker cache
-COPY requirements.txt .
+COPY --chown=user:user requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application
-COPY . .
+COPY --chown=user:user . .
 
-# Expose the port Gunicorn runs on
-EXPOSE 8000
+# Switch to the non-root user
+USER user
 
-# Run the application with Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "2", "--timeout", "120", "app.app:app"]
+# Expose the port HF Spaces uses
+EXPOSE 7860
+
+# Run the application
+CMD ["gunicorn", "--bind", "0.0.0.0:7860", "--workers", "2", "--timeout", "120", "app.app:app"]
